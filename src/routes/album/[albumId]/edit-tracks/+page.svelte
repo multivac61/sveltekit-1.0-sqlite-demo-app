@@ -7,8 +7,8 @@
 	import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 	export let data: PageData;
-	const genreArray = data.genres.map((g) => g.genreName);
-	const deletedIds: Set<number> = new Set();
+	const genreArray = data.genres;
+	const deletedIds = new Set();
 	let grid: Grid;
 
 	const gridOptions: GridOptions = {
@@ -21,26 +21,27 @@
 		},
 		rowSelection: 'multiple',
 		columnDefs: [
-			{ field: 'trackId', headerName: 'ID', editable: false, checkboxSelection: true },
-			{ field: 'trackName', headerName: 'Tracks' },
+			{ field: 'TrackId', headerName: 'ID', editable: false, checkboxSelection: true },
+			{ field: 'Name', headerName: 'Tracks' },
 			{
-				field: 'trackMs',
+				field: 'Milliseconds',
 				headerName: 'Duration',
 				type: 'numericColumn',
 				valueFormatter: (params) => (params?.value ? `${params?.value / 1000}` : '')
 			},
-			{ field: 'composer', headerName: 'Composer', cellEditor: 'agLargeTextCellEditor' },
+			{ field: 'Composer', headerName: 'Composer', cellEditor: 'agLargeTextCellEditor' },
 			{
 				field: 'genre',
 				headerName: 'Genre',
 				cellEditor: 'agSelectCellEditor',
-				cellEditorParams: {
-					values: genreArray
+				cellEditorParams: { values: genreArray.map((genre) => genre.Name).sort() },
+				valueFormatter: (params) => {
+					return params?.data?.genres?.Name;
 				}
 			}
 		],
 		rowData: data.tracks,
-		getRowId: (params) => params.data.trackId
+		getRowId: (params) => params.data.TrackId
 	};
 
 	onMount(() => {
@@ -63,15 +64,15 @@
 
 		let maxId = 0;
 		gridOptions.api?.forEachNode((rowNode) => {
-			if (rowNode.data.trackId > maxId) maxId = rowNode.data.trackId;
+			if (rowNode.data.TrackId > maxId) maxId = rowNode.data.TrackId;
 		});
 
 		const newRow = {
-			trackId: newRows * -1,
-			trackName: '',
-			trackMs: undefined,
-			composer: '',
-			genre: ''
+			TrackId: newRows * -1,
+			Name: '',
+			Milliseconds: '',
+			Composer: '',
+			genre: data.genres[0]
 		};
 
 		gridOptions.api?.applyTransaction({
@@ -89,7 +90,7 @@
 
 	function handleDelete() {
 		const selectedRowData = gridOptions.api?.getSelectedRows();
-		selectedRowData?.forEach(({ trackId }) => deletedIds.add(trackId));
+		selectedRowData?.forEach(({ TrackId }) => deletedIds.add(TrackId));
 		gridOptions.api?.applyTransaction({ remove: selectedRowData });
 	}
 
@@ -108,7 +109,7 @@
 
 		console.log('payload', payload);
 
-		const res = await fetch(`/api/album/${data.album.albumId}/handleTrackGrid`, {
+		const res = await fetch(`/api/album/${data.album.AlbumId}/handleTrackGrid`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -125,7 +126,7 @@
 </script>
 
 <div class="px-4">
-	<h1 class="is-size-1">Tracks for {data.album.albumTitle}</h1>
+	<h1 class="is-size-1">Tracks for {data.album.Title}</h1>
 
 	<div class="py-4 columns">
 		<div id="myGrid" style="height: 500px;" class="ag-theme-alpine column is-10" />

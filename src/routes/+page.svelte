@@ -2,8 +2,9 @@
 	import type { PageData } from './$types';
 	export let data: PageData;
 
-	let timer: NodeJS.Timeout;
-	let searchTerm = '';
+	let timer: NodeJS.Timeout,
+		searchTerm = '',
+		tracks = data.tracks;
 
 	function fetchTracks() {
 		fetch(`/api/searchTracks?searchTerm=${searchTerm}`)
@@ -21,8 +22,6 @@
 			fetchTracks();
 		}, 300);
 	}
-
-	let tracks = data.tracks;
 </script>
 
 <div class="px-4">
@@ -49,10 +48,10 @@
 		<tbody>
 			{#each tracks as track}
 				<tr>
-					<td>{track.trackName}</td>
-					<td>{track.artistName}</td>
-					<td><a href={`/album/${track.albumId}`}>{track.albumTitle}</a></td>
-					<td>{track.genre}</td>
+					<td>{track.Name}</td>
+					<td>{track.albums?.artists.Name}</td>
+					<td><a href={`/album/${track.albums?.AlbumId}`}>{track.albums?.Title}</a></td>
+					<td>{track.genres?.Name}</td>
 				</tr>
 			{/each}
 		</tbody>

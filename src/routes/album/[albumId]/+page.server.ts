@@ -1,37 +1,70 @@
-import { getAlbumById, getAlbumTracks, mergeAlbumImage, updateAlbumTitle } from '$lib/server/db';
 import { error, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { prisma } from '$lib/server/prisma';
 
-export const load = (({ params, locals }) => {
+export const load = (async ({ params }) => {
 	const albumId = parseInt(params.albumId);
 
 	if (!albumId) {
-		throw error(404, 'Album not found');
+		throw error(404, 'Album ID invalid');
 	}
 
-	const album = getAlbumById(albumId);
+	const album = await prisma.albums.findUnique({
+		where: {
+			AlbumId: albumId
+		},
+		select: {
+			AlbumId: true,
+			Title: true,
+			artists: {
+				select: {
+					Name: true
+				}
+			}
+		}
+	});
 
 	if (!album) {
 		throw error(404, 'Album not found');
 	}
 
-	const tracks = getAlbumTracks(albumId);
+	const tracks = await prisma.tracks.findMany({
+		where: {
+			AlbumId: albumId
+		},
+		select: {
+			TrackId: true,
+			Name: true,
+			MediaTypeId: true,
+			Milliseconds: true,
+			Bytes: true,
+			Composer: true,
+			genres: true
+		},
+		orderBy: {
+			TrackId: 'asc'
+		}
+	});
+
+	if (!tracks) {
+		throw error(404, 'No tracks found on album');
+	}
+
+	const genres = await prisma.genres.findMany()
+
+	if (!genres) {
+		throw error(404, 'No genres found');
+	}
 
 	return {
 		album,
 		tracks,
-		isAdmin: locals?.roles?.includes('admin')
+		genres
 	};
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
-	updateAlbumTitle: async ({ request, locals }) => {
-		if (!locals.username || !locals?.roles?.includes('admin')) {
-			throw error(401, {
-				message: 'Unauthorized'
-			});
-		}
-
+	updateAlbumTitle: async ({ request }) => {
 		const data = await request.formData();
 
 		const albumIdStr = data.get('albumId')?.toString();
@@ -43,22 +76,23 @@ export const actions: Actions = {
 			throw error(400, 'AlbumId or AlbumTitle missing');
 		}
 
-		updateAlbumTitle(albumId, albumTitle);
+		await prisma.albums.update({
+			where: {
+				AlbumId: albumId
+			},
+			data: {
+				Title: albumTitle
+			}
+		});
 	},
-	updateAlbumImage: async ({ request, locals }) => {
-		if (!locals.username || !locals?.roles?.includes('admin')) {
-			throw error(401, {
-				message: 'Unauthorized'
-			});
-		}
-
+	updateAlbumImage: async ({ request }) => {
 		const data = await request.formData();
 
 		const albumIdStr = data.get('albumId')?.toString();
 		const albumId = albumIdStr ? parseInt(albumIdStr) : null;
 
 		if (!albumId) {
-			throw error(400, 'AlbumId missing');
+			throw error(400, 'Album ID invalid');
 		}
 
 		const albumImage = data.get('albumImage')?.valueOf() as File;
@@ -72,6 +106,7 @@ export const actions: Actions = {
 			albumImage?.lastModified
 		);
 
-		mergeAlbumImage(albumId, albumImage);
+		// mergeAlbumImage(albumId, albumImage);
+		// TODO
 	}
 };
