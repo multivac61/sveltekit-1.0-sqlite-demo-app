@@ -1,18 +1,11 @@
 <script lang="ts">
+	import { ms_to_hhmmss } from '$lib/util';
 	import type { PageData } from './$types';
 	export let data: PageData;
 
 	$: ({ album, tracks } = data);
 
 	let uploadedImage: string;
-
-	const convert = (ms: number) => {
-		const seconds = Math.floor((ms / 1000) % 60);
-		const minutes = Math.floor((ms / (1000 * 60)) % 60);
-		const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-
-		return `${hours ? `${hours}:` : ''}${minutes}:${seconds}`;
-	};
 
 	function handleImageUpload(e: Event) {
 		const image = (e.target as HTMLInputElement)?.files?.[0];
@@ -40,7 +33,7 @@
 						<tr>
 							<td>{i + 1}</td>
 							<td>{track.Name}</td>
-							<td>{convert(track.Milliseconds)}</td>
+							<td>{ms_to_hhmmss(track.Milliseconds)}</td>
 						</tr>
 					{/each}
 				</tbody>

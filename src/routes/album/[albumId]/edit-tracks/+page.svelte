@@ -123,13 +123,55 @@
 			error = true;
 		}
 	}
+
+	let columns = ['Name', 'Email', 'Phone Number'];
+	let table_data = [
+		['John', 'john@example.com', '(353) 01 222 3333'],
+		['Mark', 'mark@gmail.com', '(01) 22 888 4444'],
+		['Eoin', 'eoin@gmail.com', '0097 22 654 00033'],
+		['Sarah', 'sarahcdd@gmail.com', '+322 876 1233'],
+		['Afshin', 'afshin@mail.com', '(353) 22 87 8356']
+	];
+	let newRow = [...columns];
+
+	function addRow() {
+		table_data = [...table_data, [...newRow]];
+		newRow = columns;
+	}
+
+	function deleteRow(rowToBeDeleted) {
+		table_data = table_data.filter((row) => row != rowToBeDeleted);
+	}
 </script>
 
 <div class="px-4">
 	<h1 class="is-size-1">Tracks for {data.album.Title}</h1>
 
 	<div class="py-4 columns">
-		<div id="myGrid" style="height: 500px;" class="ag-theme-alpine column is-10" />
+		<!-- <div id="myGrid" style="height: 500px;" class="ag-theme-alpine column is-10" /> -->
+		<table>
+			<tr>
+				{#each columns as column}
+					<th>{column}</th>
+				{/each}
+			</tr>
+
+			{#each table_data as row}
+				<tr>
+					{#each row as cell}
+						<td contenteditable="true" bind:innerHTML={cell} />
+					{/each}
+					<button on:click={() => deleteRow(row)}> X </button>
+				</tr>
+			{/each}
+
+			<tr class="new">
+				{#each newRow as column}
+					<td contenteditable="true" bind:innerHTML={column} />
+				{/each}
+				<button on:click={addRow}> add </button>
+			</tr>
+		</table>
 		<div class="column">
 			<div>
 				<button class="button" on:click={handleAddRow}>Add Row</button>
